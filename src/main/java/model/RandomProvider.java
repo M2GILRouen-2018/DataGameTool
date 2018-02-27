@@ -1,3 +1,5 @@
+package model;
+
 /**
  * Produces random values in a given double interval.
  */
