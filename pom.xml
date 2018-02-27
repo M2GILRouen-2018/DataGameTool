@@ -36,6 +36,19 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+
+        <!--
+        <dependency>
+            <groupId>io.univ.rouen.m2gil.smartclass</groupId>
+            <artifactId>core.data-lib</artifactId>
+            <version>${core.data-lib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.univ.rouen.m2gil.smartclass</groupId>
+            <artifactId>core.data-generator-lib</artifactId>
+            <version>${core.data-generator-lib.version}</version>
+        </dependency>
+        -->
     </dependencies>
 
     <build>
@@ -86,4 +99,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <!--
+        <repository>
+            <id>smartclass.univ.rouen</id>
+            <name>SmartClass Internal Repository</name>
+            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
+        </repository>
+        -->
+    </repositories>
 </project>
