@@ -16,20 +16,45 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <json.version>20172018</json.version>
+        <core.data-lib.version>0.0.5-SNAPSHOT</core.data-lib.version>
+        <core.data-generator-lib.version>0.0.9-SNAPSHOT</core.data-generator-lib.version>
     </properties>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.10.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
     <dependencies>
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+
+        <!-- Data manipulation -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>6.0.6</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>LATEST</version>
         </dependency>
+
+        <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -37,7 +62,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!--
+        <!-- Dépendances SMART-CLASS -->
         <dependency>
             <groupId>io.univ.rouen.m2gil.smartclass</groupId>
             <artifactId>core.data-lib</artifactId>
@@ -48,7 +73,6 @@
             <artifactId>core.data-generator-lib</artifactId>
             <version>${core.data-generator-lib.version}</version>
         </dependency>
-        -->
     </dependencies>
 
     <build>
@@ -101,12 +125,10 @@
     </build>
 
     <repositories>
-        <!--
         <repository>
             <id>smartclass.univ.rouen</id>
             <name>SmartClass Internal Repository</name>
             <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
         </repository>
-        -->
     </repositories>
 </project>
