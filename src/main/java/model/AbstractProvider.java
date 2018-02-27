@@ -1,3 +1,5 @@
+package model;
+
 /**
  * Abstract implementation for generic mechanisms which should be
  * common to all providers.
