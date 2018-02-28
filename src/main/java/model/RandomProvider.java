@@ -9,7 +9,7 @@ public class RandomProvider extends AbstractProvider<Double> {
     private double max;
 
     // CONSTRUCTOR
-    public RandomProvider(int a, int b) {
+    public RandomProvider(double a, double b) {
         min = a < b ? a : b;
         max = a < b ? b : a;
     }
