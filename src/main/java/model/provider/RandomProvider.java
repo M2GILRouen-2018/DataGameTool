@@ -1,7 +1,9 @@
-package model;
+package model.provider;
 
 /**
  * Produces random values in a given double interval.
+ *
+ * @version 1.0
  */
 public class RandomProvider extends AbstractProvider<Double> {
     // ATTRIBUTES

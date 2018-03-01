@@ -1,4 +1,4 @@
-package model;
+package model.provider;
 
 import java.util.Iterator;
 

@@ -1,8 +1,10 @@
-package model;
+package model.provider;
 
 /**
  * Abstract implementation for generic mechanisms which should be
  * common to all providers.
+ *
+ * @version 1.0
  */
 public abstract class AbstractProvider<T> implements Provider<T> {
     // ATTRIBUTES

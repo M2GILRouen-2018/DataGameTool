@@ -68,6 +68,7 @@
         </dependency>
 
         <!-- Dépendances SMART-CLASS -->
+        <!--
         <dependency>
             <groupId>io.univ.rouen.m2gil.smartclass</groupId>
             <artifactId>core.data-lib</artifactId>
@@ -78,6 +79,7 @@
             <artifactId>core.data-generator-lib</artifactId>
             <version>${core.data-generator-lib.version}</version>
         </dependency>
+        -->
     </dependencies>
 
     <build>
