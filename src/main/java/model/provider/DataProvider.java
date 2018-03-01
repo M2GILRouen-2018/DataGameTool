@@ -2,57 +2,60 @@ package model.provider;
 
 import model.entity.DataGenerator;
 import model.entity.DataModel;
+import model.provider.sequence.RangeSequence;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
- * Aims at producing Data
+ * Aims at producing lots of value to simulate the use of
+ * a data generator for a long time.
  */
-public class DataProvider extends AbstractProvider<DataModel> {
-    // ATTRIBUTE
+public class DataProvider extends LimitedProvider<DataModel> {
+    // CONSTANTE
     /**
-     * The random provider used to provide decimal values.
+     * The date used to start all scenariis (01/01/2018, 12:00)
      */
-    private Provider<Double> decimalProvider;
+    public static final LocalDateTime START = LocalDateTime.of(2018, 1, 1, 12, 0);
 
 
+    // ATTRIBUTES
     /**
-     * The data generator which is supposed to be the source of this
-     * data.
+     * The data generator which is used in this simulation.
      */
-    private DataGenerator dataGenerator;
-
-
-    // CONSTRUCTEUR
+    private final DataGenerator dataGenerator;
 
     /**
-     * Builds a new data provider based on a given data generator and a interval
-     * of decimal values to specify the range of values which produced pieces
-     * of data can have.
+     * The range sequence used in this simulation to produce the data within a key interval
+     */
+    private final RangeSequence rangeSequence;
+
+
+    // CONSTRUCTOR
+    /**
+     * Defines a new simulation based on a given generator and on various parameters
      *
-     * @param dataGenerator The data generator linked to the production of this piece of data
-     * @param min Values range's min
-     * @param max Values range's max
+     * @param dataGenerator The generator which is supposed to have produced these values
+     * @param a one boundary of the range
+     * @param b the other
+     * @param limit The number of values to produce.
      */
-    public DataProvider(DataGenerator dataGenerator, double min, double max) {
-        decimalProvider = new RandomProvider(min, max);
+    public DataProvider(DataGenerator dataGenerator, double a, double b, int limit) {
+        super(limit);
         this.dataGenerator = dataGenerator;
-    }
-    public DataProvider(DataGenerator dataGenerator) {
-        this(dataGenerator, 0, 100);
+        this.rangeSequence = new RangeSequence(a, b);
     }
 
 
+    // COMMAND
     @Override
     protected DataModel generate() {
-        DataModel data = new DataModel(); {
-            data.setValue(String.format("%.2f", decimalProvider.next()));
-            data.setSourceData(dataGenerator);
-            data.setDateTime(LocalDateTime.now(Clock.systemDefaultZone()));
+        LocalDateTime dateTime = last() == null ? START : last().getDateTime().plusMinutes(1);
+        DataModel dataModel = new DataModel(); {
+            dataModel.setSourceData(dataGenerator);
+            dataModel.setDateTime(dateTime);
+            dataModel.setValue(String.format("%.2f", rangeSequence.next()));
         }
 
-        return data;
+        return dataModel;
     }
 }

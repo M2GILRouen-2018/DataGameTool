@@ -19,6 +19,13 @@ public abstract class AbstractProvider<T> implements Provider<T> {
     private T last;
 
 
+    // CONSTRUCTOR
+    protected AbstractProvider(T last) {
+        this.last = last;
+    }
+    protected AbstractProvider() {}
+
+
     // REQUESTS
     @Override
     public long count() {
