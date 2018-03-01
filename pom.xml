@@ -67,8 +67,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Dépendances SMART-CLASS -->
-        <!--
+        <!-- Dépendances SMART-CLASS
         <dependency>
             <groupId>io.univ.rouen.m2gil.smartclass</groupId>
             <artifactId>core.data-lib</artifactId>
