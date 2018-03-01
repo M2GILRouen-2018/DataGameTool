@@ -1,8 +1,10 @@
 package model.provider;
 
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
+import model.entity.DataGenerator;
 import model.entity.DataModel;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -48,7 +50,7 @@ public class DataProvider extends AbstractProvider<DataModel> {
         DataModel data = new DataModel(); {
             data.setValue(String.format("%.2f", decimalProvider.next()));
             data.setSourceData(dataGenerator);
-            data.setDateTime(new Date());
+            data.setDateTime(LocalDateTime.now(Clock.systemDefaultZone()));
         }
 
         return data;
