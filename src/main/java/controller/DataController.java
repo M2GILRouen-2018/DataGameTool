@@ -1,7 +1,7 @@
 package controller;
 
-import io.univ.rouen.m2gil.smartclass.core.data.Data;
-import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
+import model.entity.Data;
+import repository.DataRepository;
 import model.provider.Provider;
 import model.provider.RandomProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +11,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Date;
 
+/**
+ * Provides an interface in order to visualise the process of data generation
+ * on simple samples.
+ */
 @RestController
 @RequestMapping("/data")
 public class DataController {
@@ -66,7 +73,7 @@ public class DataController {
     private Data generateData(double a, double b) {
         Provider<Double> provider = new RandomProvider(a, b);
         Data data = new Data(); {
-            data.setDateTime(new Date());
+            data.setDateTime(LocalDateTime.now(Clock.systemDefaultZone()));
             data.setValue(String.format("%.2f", provider.next()));
         }
 
