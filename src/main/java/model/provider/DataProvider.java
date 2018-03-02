@@ -53,7 +53,7 @@ public class DataProvider extends LimitedProvider<DataModel> {
         DataModel dataModel = new DataModel(); {
             dataModel.setSourceData(dataGenerator);
             dataModel.setDateTime(dateTime);
-            dataModel.setValue(String.format("%.2f", rangeSequence.next()));
+            dataModel.setValue(String.format("%.2f", rangeSequence.next()).replace(',','.'));
         }
 
         return dataModel;

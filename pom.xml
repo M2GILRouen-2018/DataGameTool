@@ -95,11 +95,13 @@
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
         </repository>
+        <!--
         <repository>
             <id>smartclass.univ.rouen</id>
             <name>SmartClass Internal Repository</name>
             <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
         </repository>
+        -->
     </repositories>
     <pluginRepositories>
         <pluginRepository>
