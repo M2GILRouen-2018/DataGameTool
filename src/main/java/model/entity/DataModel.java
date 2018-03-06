@@ -1,5 +1,8 @@
 package model.entity;
 
+import io.univ.rouen.m2gil.smartclass.core.data.Data;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
+
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 

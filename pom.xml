@@ -16,8 +16,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <json.version>20172018</json.version>
-        <core.data-lib.version>0.0.5-SNAPSHOT</core.data-lib.version>
-        <core.data-generator-lib.version>0.0.9-SNAPSHOT</core.data-generator-lib.version>
+        <core.data-lib.version>1.1.0-RELEASE</core.data-lib.version>
+        <core.data-generator-lib.version>1.1.0-RELEASE</core.data-generator-lib.version>
     </properties>
 
     <parent>
@@ -58,6 +58,11 @@
             <artifactId>json</artifactId>
             <version>LATEST</version>
         </dependency>
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>1.1.0</version>
+        </dependency>
 
         <!-- Test -->
         <dependency>
@@ -67,7 +72,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Dépendances SMART-CLASS
+        <!-- Dépendances SMART-CLASS -->
         <dependency>
             <groupId>io.univ.rouen.m2gil.smartclass</groupId>
             <artifactId>core.data-lib</artifactId>
@@ -78,7 +83,6 @@
             <artifactId>core.data-generator-lib</artifactId>
             <version>${core.data-generator-lib.version}</version>
         </dependency>
-        -->
     </dependencies>
 
     <build>
@@ -95,13 +99,11 @@
             <id>spring-releases</id>
             <url>https://repo.spring.io/libs-release</url>
         </repository>
-        <!--
         <repository>
             <id>smartclass.univ.rouen</id>
             <name>SmartClass Internal Repository</name>
-            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
+            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-releases/</url>
         </repository>
-        -->
     </repositories>
     <pluginRepositories>
         <pluginRepository>

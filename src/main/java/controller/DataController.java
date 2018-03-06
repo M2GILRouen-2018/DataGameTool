@@ -1,7 +1,7 @@
 package controller;
 
-import model.entity.Data;
-import repository.DataRepository;
+import io.univ.rouen.m2gil.smartclass.core.data.Data;
+import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
 import model.provider.Provider;
 import model.provider.RandomProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * Provides an interface in order to visualise the process of data generation

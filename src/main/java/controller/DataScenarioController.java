@@ -1,6 +1,8 @@
 package controller;
 
-import model.entity.DataGenerator;
+import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorRepository;
 import model.entity.DataModel;
 import model.provider.DataProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import repository.DataGeneratorRepository;
-import repository.DataRepository;
 
 import java.util.List;
 
