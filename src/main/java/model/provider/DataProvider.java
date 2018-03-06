@@ -1,6 +1,6 @@
 package model.provider;
 
-import model.entity.DataGenerator;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
 import model.entity.DataModel;
 import model.provider.sequence.RangeSequence;
 

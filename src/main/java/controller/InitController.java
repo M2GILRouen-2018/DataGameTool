@@ -1,9 +1,9 @@
 package controller;
 
-import model.entity.DataGenerator;
-import repository.DataGeneratorRepository;
-import model.entity.DataGeneratorType;
-import repository.DataGeneratorTypeRepository;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorRepository;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorType;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorTypeRepository;
 import model.entity.Sensor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
