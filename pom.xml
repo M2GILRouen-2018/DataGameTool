@@ -16,8 +16,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <json.version>20172018</json.version>
-        <core.data-lib.version>1.1.0-RELEASE</core.data-lib.version>
-        <core.data-generator-lib.version>1.1.0-RELEASE</core.data-generator-lib.version>
+        <core.version>2.0.10-SNAPSHOT</core.version>
     </properties>
 
     <parent>
@@ -58,11 +57,6 @@
             <artifactId>json</artifactId>
             <version>LATEST</version>
         </dependency>
-        <dependency>
-            <groupId>org.modelmapper</groupId>
-            <artifactId>modelmapper</artifactId>
-            <version>1.1.0</version>
-        </dependency>
 
         <!-- Test -->
         <dependency>
@@ -75,13 +69,8 @@
         <!-- Dépendances SMART-CLASS -->
         <dependency>
             <groupId>io.univ.rouen.m2gil.smartclass</groupId>
-            <artifactId>core.data-lib</artifactId>
-            <version>${core.data-lib.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.univ.rouen.m2gil.smartclass</groupId>
-            <artifactId>core.data-generator-lib</artifactId>
-            <version>${core.data-generator-lib.version}</version>
+            <artifactId>core</artifactId>
+            <version>${core.version}</version>
         </dependency>
     </dependencies>
 
@@ -102,7 +91,7 @@
         <repository>
             <id>smartclass.univ.rouen</id>
             <name>SmartClass Internal Repository</name>
-            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-releases/</url>
+            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
         </repository>
     </repositories>
     <pluginRepositories>

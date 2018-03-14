@@ -5,7 +5,7 @@ package model.provider;
  *
  * @version 1.0
  */
-public class RandomProvider extends AbstractProvider<Double> {
+class RandomProvider extends AbstractProvider<Double> {
     // ATTRIBUTES
     private double min;
     private double max;

@@ -9,12 +9,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableAutoConfiguration
 @EntityScan(basePackages = {
-        "io.univ.rouen.m2gil.smartclass",
-        "model.entity"
+        "io.univ.rouen.m2gil.smartclass.core"
 })
 @EnableJpaRepositories(basePackages = {
-        "io.univ.rouen.m2gil.smartclass",
-        "repository"
+        "io.univ.rouen.m2gil.smartclass.core"
 })
 @EnableTransactionManagement
 public class AppConfig {}

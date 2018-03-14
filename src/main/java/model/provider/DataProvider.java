@@ -1,7 +1,7 @@
 package model.provider;
 
+import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
-import model.entity.DataModel;
 import model.provider.sequence.RangeSequence;
 
 import java.time.LocalDateTime;
@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
  * Aims at producing lots of value to simulate the use of
  * a data generator for a long time.
  */
-public class DataProvider extends LimitedProvider<DataModel> {
+class DataProvider extends LimitedProvider<Data> {
     // CONSTANTE
     /**
-     * The date used to start all scenariis (01/01/2018, 12:00)
+     * The date used to start all scenariis (01/01/2018, 00:00)
      */
-    public static final LocalDateTime START = LocalDateTime.of(2018, 1, 1, 12, 0);
+    public static final LocalDateTime START = LocalDateTime.of(2018, 1, 1, 0, 0);
 
 
     // ATTRIBUTES
@@ -48,14 +48,14 @@ public class DataProvider extends LimitedProvider<DataModel> {
 
     // COMMAND
     @Override
-    protected DataModel generate() {
+    protected Data generate() {
         LocalDateTime dateTime = last() == null ? START : last().getDateTime().plusMinutes(1);
-        DataModel dataModel = new DataModel(); {
-            dataModel.setSourceData(dataGenerator);
-            dataModel.setDateTime(dateTime);
-            dataModel.setValue(String.format("%.2f", rangeSequence.next()).replace(',','.'));
+        Data data = new Data(); {
+            data.setSourceData(dataGenerator);
+            data.setDateTime(dateTime);
+            data.setValue(String.format("%.2f", rangeSequence.next()).replace(',','.'));
         }
 
-        return dataModel;
+        return data;
     }
 }

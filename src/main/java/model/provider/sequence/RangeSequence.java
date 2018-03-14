@@ -1,6 +1,7 @@
 package model.provider.sequence;
 
-import model.provider.RandomProvider;
+import model.provider.Provider;
+import model.provider.ProviderBuilder;
 
 /**
  * This providers returns value which are included between two limits min and max.
@@ -36,7 +37,7 @@ public class RangeSequence extends AbstractSequence<Double> {
     /**
      * The probability generator used to determine the choice.
      */
-    private final RandomProvider probabilityProvider;
+    private final Provider<Double> probabilityProvider;
 
 
     // CONSTRUCTORS
@@ -52,7 +53,7 @@ public class RangeSequence extends AbstractSequence<Double> {
 
         min = a < b ? a : b;
         max = a < b ? b : a;
-        probabilityProvider = new RandomProvider(0, 1);
+        probabilityProvider = ProviderBuilder.getInstance().getProbabilityProvider();
         step = (max - min) * EVOLUTION_STEP;
     }
     public RangeSequence(double a, double b) {

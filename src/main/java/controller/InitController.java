@@ -1,10 +1,17 @@
 package controller;
 
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorRepository;
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorType;
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorTypeRepository;
-import model.entity.Sensor;
+import io.univ.rouen.m2gil.smartclass.core.course.Course;
+import io.univ.rouen.m2gil.smartclass.core.course.Subject;
+import io.univ.rouen.m2gil.smartclass.core.course.SubjectRepository;
+import io.univ.rouen.m2gil.smartclass.core.data.Data;
+import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
+import io.univ.rouen.m2gil.smartclass.core.datagenerator.*;
+import io.univ.rouen.m2gil.smartclass.core.user.Grade;
+import io.univ.rouen.m2gil.smartclass.core.user.GradeRepository;
+import io.univ.rouen.m2gil.smartclass.core.user.User;
+import io.univ.rouen.m2gil.smartclass.core.user.UserRepository;
+import model.DaysValueProvider;
+import model.Values;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,77 +34,130 @@ public class InitController {
      * The repository used for the storage of data generators
      */
     @Autowired
-    private DataGeneratorRepository dataGeneratorRepository;
+    private DataGeneratorRepository<DataGenerator> dataGeneratorRepository;
 
     /**
      * The repository used for the storage of types
      */
     @Autowired
-    private DataGeneratorTypeRepository typeRepository;
-
-
-    /**
-     * The list of all defined data generators available
-     */
-    private List<DataGenerator> dataGenerators;
+    private DataGeneratorTypeRepository<DataGeneratorType> typeRepository;
 
     /**
-     * The list of all types available
+     * The repository used for data storage
      */
-    private List<DataGeneratorType> types;
+    @Autowired
+    private DataRepository<Data> dataRepository;
+
+    /**
+     * The repository used for the storage of subjects
+     */
+    @Autowired
+    private SubjectRepository<Subject> subjectRepository;
+
+    /**
+     * The repository used for the storage of grades
+     */
+    @Autowired
+    private GradeRepository<Grade> gradeRepository;
+
+    /**
+     * The repository used for the storage of all users
+     */
+    @Autowired
+    private UserRepository<User> userRepository;
+
+
+    // ATTRIBUTES
+    private List<Subject> subjects;
+    private List<Grade> grades;
+    private List<User> students;
+    private List<User> teachers;
+    private List<Course> courses;
 
 
     // REQUESTS
+    /**
+     * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
+     */
+    @RequestMapping(method = RequestMethod.GET, path="/initialData")
+    public ResponseEntity<?> defineInitialData() {
+        // Definition of subjects
+        subjects = new ArrayList<>();
+        for (String s : Values.SUBJECTS) {
+            Subject subject = new Subject(); {
+                subject.setLabel(s);
+            }
+            subjects.add(subject);
+        }
+        subjectRepository.save(subjects);
+
+        // Definition of grades
+        grades = new ArrayList<>();
+        for (Object[] tab : Values.GRADES) {
+            Grade g = new Grade(); {
+                g.setTitle((String) tab[0]);
+
+                List<Subject> temp = new ArrayList<>();
+                for (int i : (int[]) tab[3]) temp.add(subjects.get(i));
+                g.setSubjects(temp);
+            }
+            grades.add(g);
+        }
+        gradeRepository.save(grades);
+
+        // Definition of all students
+        students = new ArrayList<>();
+        int id = 1;
+        for (Object[] tab : Values.STUDENTS) {
+            Grade g = grades.get((int) tab[1]);
+
+            for (int k = 0; k < (int) tab[0]; ++k) {
+                User u = new User(); {
+                    u.setLang("fr");
+                    u.setBadgeId("E-99999-" + id);
+                    u.setEmail();
+                }
+                students.add(u);
+                ++id;
+            }
+        }
+        userRepository.save(students);
+
+        // Definition of all teachers
+
+
+        return new ResponseEntity<Object>(HttpStatus.OK);
+    }
+
+
+
     /**
      * Defines in the DBMS, all sensors types which will be used.
      */
     @RequestMapping(method = RequestMethod.GET, path="/")
     public ResponseEntity<?> init() {
+        long start = System.currentTimeMillis();
+
         // Definition of types
-        ResponseEntity initTypesResponse = initTypes();
-        if (initTypesResponse.getStatusCode() != HttpStatus.OK) return initTypesResponse;
+        DataGeneratorType type = makeType("temperature", "°C", -10, 40);
+        typeRepository.save(type);
 
-        // Definition of data generators
-        ResponseEntity initSensorsResponse = initSensors();
-        if (initSensorsResponse.getStatusCode() != HttpStatus.OK) return initSensorsResponse;
+        // Definition of the data generator
+        SmartSensor sensor = makeSensor(type);
+        dataGeneratorRepository.save(sensor);
 
-        // Success
-        return new ResponseEntity<Object>("The sensors (and their types) have been initialized !", HttpStatus.OK);
-    }
-
-
-    /**
-     * Defines in the DBMS, all sensors types which will be used.
-     */
-    @RequestMapping(method = RequestMethod.GET, path="/types")
-    public ResponseEntity<?> initTypes() {
-        // Definition of entities
-        typeRepository.save(makeType("Température", "°C", -257, 999));
-        typeRepository.save(makeType("Hygrométrie", "%", 0, 100));
-
-        // Success
-        types = (List<DataGeneratorType>) typeRepository.findAll();
-        return new ResponseEntity<Object>(types, HttpStatus.OK);
-    }
-
-    /**
-     * Defines in the DBMS, all "real sensors" to use as data's source.
-     */
-    @RequestMapping(method = RequestMethod.GET, path="/sensors")
-    public ResponseEntity<?> initSensors() {
-        List<DataGenerator> sensors = new ArrayList<>(); {
-            // Definition of entities
-            for (int k = 0; k < 4; ++k) sensors.add(makeSensor(types.get(0)));
-            sensors.add(2, makeSensor(types.get(1)));
+        // Definition of all data for 2 months.
+        DaysValueProvider provider = new DaysValueProvider(sensor, -5, 20, 365);
+        while (provider.hasNext()) {
+            dataRepository.save(provider.next());
         }
 
-        // Saving in database, then returning all created objects
-        dataGenerators = new ArrayList<>();
-        for (DataGenerator sensor : sensors) {
-            DataGenerator dataGenerator = (DataGenerator) dataGeneratorRepository.save(sensor);
-            dataGenerators.add(dataGenerator);
-        }
-        return new ResponseEntity<Object>(dataGenerators, HttpStatus.OK);
+        // Success
+        String message = String.format(
+                "The sensor has been initialized in %d ms !",
+                System.currentTimeMillis() - start
+        );
+        return new ResponseEntity<Object>(message, HttpStatus.OK);
     }
 
 
@@ -119,11 +179,23 @@ public class InitController {
     /**
      * Returns a new sensor object, based on the provided attributes' value
      */
-    private Sensor makeSensor(DataGeneratorType type) {
-        Sensor s = new Sensor(); {
+    private SmartSensor makeSensor(DataGeneratorType type) {
+        SmartSensor s = new SmartSensor(); {
             s.setEnable(true);
             s.setType(type);
             s.setProducingVirtual(true);
+            s.setReference("AXKSI");
+        }
+
+        return s;
+    }
+
+    /**
+     * Returns a
+     */
+    private Subject makeSubject() {
+        Subject s = new Subject(); {
+            s.setLabel();
         }
 
         return s;
