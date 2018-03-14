@@ -53,7 +53,7 @@ public class RangeSequence extends AbstractSequence<Double> {
 
         min = a < b ? a : b;
         max = a < b ? b : a;
-        probabilityProvider = ProviderBuilder.getInstance().getProbabilityProvider();
+        probabilityProvider = ProviderBuilder.getProbabilityProvider();
         step = (max - min) * EVOLUTION_STEP;
     }
     public RangeSequence(double a, double b) {

@@ -2,8 +2,9 @@ package model;
 
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
-import model.provider.DataProvider;
 import model.provider.LimitedProvider;
+import model.provider.Provider;
+import model.provider.ProviderBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +24,14 @@ public class DaysValueProvider extends LimitedProvider<List<Data>> {
     /**
      * The data provider which is associated to this "sensor" emulator.
      */
-    private DataProvider dataProvider;
+    private Provider<Data> dataProvider;
 
 
     // CONSTRUCTOR
     public DaysValueProvider(DataGenerator dataGenerator, double a, double b, int days) {
         super(days);
 
-        dataProvider = new DataProvider(dataGenerator, a, b, days * MINUTES_PER_DAY);
+        dataProvider = ProviderBuilder.getDataProvider(dataGenerator, a, b, days * MINUTES_PER_DAY);
     }
 
     // TOOL

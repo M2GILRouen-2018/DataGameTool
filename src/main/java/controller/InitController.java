@@ -6,12 +6,11 @@ import io.univ.rouen.m2gil.smartclass.core.course.SubjectRepository;
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.*;
-import io.univ.rouen.m2gil.smartclass.core.user.Grade;
-import io.univ.rouen.m2gil.smartclass.core.user.GradeRepository;
-import io.univ.rouen.m2gil.smartclass.core.user.User;
-import io.univ.rouen.m2gil.smartclass.core.user.UserRepository;
+import io.univ.rouen.m2gil.smartclass.core.user.*;
 import model.DaysValueProvider;
 import model.Values;
+import model.provider.Provider;
+import model.provider.ProviderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -72,6 +72,7 @@ public class InitController {
     private List<Grade> grades;
     private List<User> students;
     private List<User> teachers;
+    private List<User> overseers;
     private List<Course> courses;
 
 
@@ -84,10 +85,7 @@ public class InitController {
         // Definition of subjects
         subjects = new ArrayList<>();
         for (String s : Values.SUBJECTS) {
-            Subject subject = new Subject(); {
-                subject.setLabel(s);
-            }
-            subjects.add(subject);
+            subjects.add(makeSubject(s));
         }
         subjectRepository.save(subjects);
 
@@ -106,6 +104,8 @@ public class InitController {
         gradeRepository.save(grades);
 
         // Definition of all students
+        Provider<String> firstNameProvider = ProviderBuilder.getItemProvider(Values.FIRST_NAMES);
+        Provider<String> lastNameProvider = ProviderBuilder.getItemProvider(Values.LAST_NAMES);
         students = new ArrayList<>();
         int id = 1;
         for (Object[] tab : Values.STUDENTS) {
@@ -114,8 +114,13 @@ public class InitController {
             for (int k = 0; k < (int) tab[0]; ++k) {
                 User u = new User(); {
                     u.setLang("fr");
+                    u.setEnabled(true);
                     u.setBadgeId("E-99999-" + id);
-                    u.setEmail();
+                    u.setRole(Role.STUDENT);
+                    u.setGrades(Arrays.asList(g));
+                    u.setFirstName(firstNameProvider.next());
+                    u.setLastName(lastNameProvider.next());
+                    u.setEmail(createEmail(u, id));
                 }
                 students.add(u);
                 ++id;
@@ -124,10 +129,29 @@ public class InitController {
         userRepository.save(students);
 
         // Definition of all teachers
+        teachers = new ArrayList<>();
+        for (Object[] tab : Values.TEACHERS) {
+            User u = new User(); {
+                u.setLang("fr");
+                u.setEnabled(true);
+                u.setBadgeId("E-99999-" + id);
+                u.setRole(Role.TEACHER);
+                u.setFirstName(firstNameProvider.next());
+                u.setLastName(lastNameProvider.next());
+                u.setEmail(createEmail(u, id));
 
+                List<Subject> temp = new ArrayList<>();
+                for (int k = 0; k < tab.length; ++k) {
+                    temp.add(subjects.get((int) tab[k]));
+                }
+                u.setSubjectsRegistered(temp);
+            }
+            teachers.add(u);
+            ++id;
+        }
+        userRepository.save(teachers);
 
-
-        return new ResponseEntity<Object>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 
@@ -192,13 +216,25 @@ public class InitController {
     }
 
     /**
-     * Returns a
+     * Returns a new Subject object
      */
-    private Subject makeSubject() {
+    private Subject makeSubject(String label) {
         Subject s = new Subject(); {
-            s.setLabel();
+            s.setLabel(label);
         }
 
         return s;
+    }
+
+    /**
+     * Create a new email based on a id, a first name and a last name.
+     */
+    private String createEmail(User u, int id) {
+        return String.format(
+                "%s.%s%d@gmail.com",
+                u.getFirstName().toLowerCase().replace(' ', '_'),
+                u.getLastName().toLowerCase().replace(' ', '_'),
+                id
+        );
     }
 }
