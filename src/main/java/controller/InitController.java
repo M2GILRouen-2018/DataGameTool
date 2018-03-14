@@ -126,6 +126,7 @@ public class InitController {
         // Definition of all teachers
 
 
+
         return new ResponseEntity<Object>(HttpStatus.OK);
     }
 

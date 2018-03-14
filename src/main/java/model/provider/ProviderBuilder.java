@@ -3,6 +3,7 @@ package model.provider;
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,7 +50,10 @@ public abstract class ProviderBuilder {
     /**
      * Create a new random provider based on a given collection
      */
-    public static <T> Provider<T> getCollectionRandomProvider(T... elements) {
-        return new CollectionProvider(elements);
+    public static <T> Provider<T> getItemProvider(T... elements) {
+        return new ItemProvider<T>(elements);
+    }
+    public static <T> Provider<T> getItemProvider(Collection<T> elements) {
+        return new ItemProvider<T>(elements);
     }
 }
