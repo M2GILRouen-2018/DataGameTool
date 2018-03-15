@@ -11,9 +11,13 @@ import java.util.Map;
  * Defines lots of initial data, used for the demo.
  */
 public class Values {
-    // DATA GAME DEFINITION
+    // DEMO DEFINITION
     public static final long DEMO_DAYS = 60;
 
+    public static final long DEMO_BASIC_SENSORS = 5;
+
+
+    // DATA GAME DEFINITION
     public static final String[] SUBJECTS = {"SPRING", "JAVA", "KOTLIN", "CRYPTO", "TYPESCRIPT", "COMPILATION"};
 
     /** Grades' array : [Name, min_presency, max_presency, related_subjects] */

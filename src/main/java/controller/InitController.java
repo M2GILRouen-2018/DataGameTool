@@ -91,9 +91,16 @@ public class InitController {
     /**
      * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
      */
+    @RequestMapping(method = RequestMethod.GET, path="/demo")
+    public ResponseEntity<?> demo() {
+        return demo(Values.DEMO_DAYS);
+    }
+
+    /**
+     * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
+     */
     @RequestMapping(method = RequestMethod.GET, path="/demo/{days}")
     public ResponseEntity<?> demo(@PathVariable Long days) {
-        if (days == null) days = Values.DEMO_DAYS;
         long start = System.currentTimeMillis();
 
         // Definition of subjects
@@ -200,76 +207,11 @@ public class InitController {
             }
             classroomRepository.save(c);
 
-            // Defining associated temperature/hygrometry data generator
-            for (int k = 0; k < 2; ++k) {
-                DataGenerator dg = makeSensor(types.get(k));
-                dg.setClassroom(c);
+            // Defining associated sensors
+            for (int k = 0; k < 3; ++k) {
+                DataGenerator dg = makeSensor(c, types.get(k));
                 dataGeneratorRepository.save(dg);
-
-                // Creating a new data type
-                int n = (int) (Math.random() * Values.VARIANCES[k].length);
-                double min = (double) Values.VARIANCES[k][n][0];
-                double max = (double) Values.VARIANCES[k][n][1];
-
-                Provider<List<Data>> dataCollector = ProviderBuilder.collector(
-                        ProviderBuilder.getDataProvider(dg, min, max),
-                        60 * 24
-                );
-
-                // Creating data for a given number of days
-                for (int day = 0; day < 7; ++day) {
-                    dataRepository.save(dataCollector.next());
-                }
-            }
-
-            // Defining associated luminosity data generator
-            DataGenerator dg = makeSensor(types.get(2));
-            dg.setClassroom(c);
-            dataGeneratorRepository.save(dg);
-
-            // Creating a new dataProvider to create light levels values
-            LocalTime lightUp = (LocalTime) Values.VARIANCES[2][0][0];
-            LocalTime lightDown = (LocalTime) Values.VARIANCES[2][0][1];
-
-            int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
-            int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
-            int step = 45;
-
-
-            // Building data provider
-            Provider<Double> dvp = ProviderBuilder.compose(
-                    ProviderBuilder.limit(
-                            ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
-                            sunrise - step
-                    ),
-                    ProviderBuilder.limit(
-                            ProviderBuilder.getLinearSegmentProvider(2 * step, Values.NIGHT_LIGHT, Values.DAY_LIGHT),
-                            2*step
-                    ),
-                    ProviderBuilder.limit(
-                            ProviderBuilder.getRangeSequence(0.95 * Values.DAY_LIGHT, 1.05 * Values.DAY_LIGHT),
-                            sunset - (sunrise + step) - step
-                    ),
-                    ProviderBuilder.limit(
-                            ProviderBuilder.getLinearSegmentProvider(2 * step, Values.DAY_LIGHT, Values.NIGHT_LIGHT),
-                            2 * step
-                    ),
-                    ProviderBuilder.limit(
-                            ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
-                            60 * 24 - (sunset + step)
-                    )
-            );
-
-            // Collecting daily values from this provider
-            Provider<List<Data>> dayLightCollector = ProviderBuilder.collector(
-                    ProviderBuilder.getDataProvider(dg, dvp),
-                    60 * 24
-            );
-
-            // Creating data for a given number of days
-            for (int day = 0; day < days; ++day) {
-                dataRepository.save(dayLightCollector.next());
-                dvp.reset();
+                produceData(dg, k, days);
             }
         }
 
@@ -280,34 +222,6 @@ public class InitController {
 
 
     // TOOLS
-    /**
-     * Returns a new sensor type object, based on the provided attributes' value
-     */
-    private DataGeneratorType makeType(String type, String unitMeasure, double min, double max) {
-        DataGeneratorType t = new DataGeneratorType(); {
-            t.setType(type);
-            t.setUnitMeasure(unitMeasure);
-            t.setMinValue(min);
-            t.setMaxValue(max);
-        }
-
-        return t;
-    }
-
-    /**
-     * Returns a new sensor object, based on the provided attributes' value
-     */
-    private SmartSensor makeSensor(DataGeneratorType type) {
-        SmartSensor s = new SmartSensor(); {
-            s.setEnable(true);
-            s.setType(type);
-            s.setProducingVirtual(true);
-            s.setReference("AXKSI");
-        }
-
-        return s;
-    }
-
     /**
      * Returns a new Subject object
      */
@@ -329,5 +243,95 @@ public class InitController {
                 u.getLastName().toLowerCase().replace(' ', '_'),
                 id
         );
+    }
+
+    /**
+     * Returns a new sensor type object, based on the provided attributes' value
+     */
+    private DataGeneratorType makeType(String type, String unitMeasure, double min, double max) {
+        DataGeneratorType t = new DataGeneratorType(); {
+            t.setType(type);
+            t.setUnitMeasure(unitMeasure);
+            t.setMinValue(min);
+            t.setMaxValue(max);
+        }
+
+        return t;
+    }
+
+    /**
+     * Returns a new sensor object, based on the provided attributes' value
+     */
+    private SmartSensor makeSensor(Classroom c, DataGeneratorType type) {
+        SmartSensor s = new SmartSensor(); {
+            s.setClassroom(c);
+            s.setEnable(true);
+            s.setType(type);
+            s.setProducingVirtual(true);
+            s.setReference("AXKSI");
+        }
+
+        return s;
+    }
+
+    /**
+     * Produce all data for a given sensor.
+     */
+    private void produceData(DataGenerator dg, int typeId, long days) {
+        Provider<Data> dataProvider = null;
+
+        // Temp and Hygro.
+        if (0 <= typeId && typeId < 2) {
+            // Generation parameters
+            int n = (int) (Math.random() * Values.VARIANCES[typeId].length);
+            double min = (double) Values.VARIANCES[typeId][n][0];
+            double max = (double) Values.VARIANCES[typeId][n][1];
+
+            // Creating associated data provider
+            dataProvider = ProviderBuilder.getDataProvider(dg, min, max);
+        }
+        // Light
+        else if (typeId == 2) {
+            // Generation parameters
+            LocalTime lightUp = (LocalTime) Values.VARIANCES[2][0][0];
+            LocalTime lightDown = (LocalTime) Values.VARIANCES[2][0][1];
+
+            int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
+            int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
+            int step = 45;
+
+            // Creating associated data provider
+            dataProvider = ProviderBuilder.getDataProvider(dg, ProviderBuilder.compose(
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
+                        sunrise - step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getLinearSegmentProvider(2 * step, Values.NIGHT_LIGHT, Values.DAY_LIGHT),
+                        2*step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95 * Values.DAY_LIGHT, 1.05 * Values.DAY_LIGHT),
+                        sunset - (sunrise + step) - step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getLinearSegmentProvider(2 * step, Values.DAY_LIGHT, Values.NIGHT_LIGHT),
+                        2 * step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
+                        60 * 24 - (sunset + step)
+                )
+            ));
+        } else {
+            throw new AssertionError();
+        }
+
+        // Creating data for a given number of days
+        Provider<List<Data>> dataCollector = ProviderBuilder.collector(dataProvider,60 * 24);
+        for (int day = 0; day < days; ++day) {
+            dataRepository.save(dataCollector.next());
+            dataProvider.reset();
+        }
     }
 }

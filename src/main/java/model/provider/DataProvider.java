@@ -50,6 +50,17 @@ class DataProvider extends AbstractProvider<Data> {
 
     // COMMAND
     @Override
+    public boolean hasNext() {
+        return valueProvider.hasNext();
+    }
+
+    @Override
+    public void reset(Data last) {
+        super.reset(last);
+        valueProvider.reset(last == null ? null : Double.valueOf(last.getValue()));
+    }
+
+    @Override
     protected Data generate() {
         LocalDateTime dateTime = last() == null ? Values.START : last().getDateTime().plusMinutes(1);
         Data data = new Data(); {
