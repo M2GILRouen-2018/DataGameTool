@@ -30,7 +30,6 @@ import java.util.List;
  * to specify a source for all produced values.
  */
 @RestController
-@RequestMapping("/init")
 public class InitController {
     // REPOSITORIES
     /**
@@ -200,8 +199,10 @@ public class InitController {
         }
         typeRepository.save(types);
 
-        for (int i = 1; i <= 1; ++i) {
-            // Defining classroom
+
+        // Defining all classrooms
+        Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
+        for (int i = 1; i <= Values.DEMO_BASIC_ROOMS; ++i) {
             Classroom c = new Classroom(); {
                 c.setName("U2.2." + (i + 30));
             }
@@ -209,9 +210,16 @@ public class InitController {
 
             // Defining associated sensors
             for (int k = 0; k < 3; ++k) {
-                DataGenerator dg = makeSensor(c, types.get(k));
-                dataGeneratorRepository.save(dg);
-                produceData(dg, k, days);
+                // Simulate the lack of this type of sensor in a given class
+                if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
+                    do {
+                        DataGenerator dg = makeSensor(c, types.get(k));
+                        dataGeneratorRepository.save(dg);
+                        produceData(dg, k, days);
+
+                        // Simulate an additionnal sensor of this type ?
+                    } while (probabilityProvider.next() < Values.DEMO_ADDITIONNAL_SENSOR_CHANCE);
+                }
             }
         }
 

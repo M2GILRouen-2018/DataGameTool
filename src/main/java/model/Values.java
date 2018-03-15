@@ -14,7 +14,11 @@ public class Values {
     // DEMO DEFINITION
     public static final long DEMO_DAYS = 60;
 
-    public static final long DEMO_BASIC_SENSORS = 5;
+    public static final long DEMO_BASIC_ROOMS = 18;
+
+    public static final double DEMO_ADDITIONNAL_SENSOR_CHANCE = 0.1;
+
+    public static final double DEMO_SKIP_SENSOR_CHANCE = 0.06;
 
 
     // DATA GAME DEFINITION
