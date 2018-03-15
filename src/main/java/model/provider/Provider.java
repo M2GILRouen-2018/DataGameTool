@@ -22,6 +22,16 @@ public interface Provider<T> extends Iterator<T> {
 
     // COMMANDS
     /**
+     * Reset the internal state of a provider with a specific "last" value
+     */
+    void reset(T last);
+
+    /**
+     * Reset the internal state of a provider
+     */
+    void reset();
+
+    /**
      * Generate a new value, based on the provider's generation logic
      */
     @Override

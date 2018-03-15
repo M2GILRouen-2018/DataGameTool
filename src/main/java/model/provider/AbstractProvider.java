@@ -23,7 +23,7 @@ public abstract class AbstractProvider<T> implements Provider<T> {
     protected AbstractProvider(T last) {
         this.last = last;
     }
-    protected AbstractProvider() {}
+    protected AbstractProvider() { this(null); }
 
 
     // REQUESTS
@@ -46,10 +46,24 @@ public abstract class AbstractProvider<T> implements Provider<T> {
     // COMMANDS
     @Override
     public T next() {
+        if (!hasNext()) throw new AssertionError();
+
         last = generate();
         ++count;
         return last;
     }
+
+    @Override
+    public void reset(T last) {
+        this.last = last;
+        count = 0;
+    }
+
+    @Override
+    public void reset() {
+        reset(last());
+    }
+
 
     // TOOLS
     /**

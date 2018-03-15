@@ -1,5 +1,7 @@
 package controller;
 
+import io.univ.rouen.m2gil.smartclass.core.classroom.Classroom;
+import io.univ.rouen.m2gil.smartclass.core.classroom.ClassroomRepository;
 import io.univ.rouen.m2gil.smartclass.core.course.Course;
 import io.univ.rouen.m2gil.smartclass.core.course.Subject;
 import io.univ.rouen.m2gil.smartclass.core.course.SubjectRepository;
@@ -7,17 +9,18 @@ import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.*;
 import io.univ.rouen.m2gil.smartclass.core.user.*;
-import model.DaysValueProvider;
 import model.Values;
 import model.provider.Provider;
 import model.provider.ProviderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -66,6 +69,12 @@ public class InitController {
     @Autowired
     private UserRepository<User> userRepository;
 
+    /**
+     * The repository used for the storage of all classrooms
+     */
+    @Autowired
+    private ClassroomRepository<Classroom> classroomRepository;
+
 
     // ATTRIBUTES
     private List<Subject> subjects;
@@ -74,14 +83,19 @@ public class InitController {
     private List<User> teachers;
     private List<User> overseers;
     private List<Course> courses;
+    private List<DataGeneratorType> types;
+    private List<Classroom> classrooms;
 
 
     // REQUESTS
     /**
      * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
      */
-    @RequestMapping(method = RequestMethod.GET, path="/initialData")
-    public ResponseEntity<?> defineInitialData() {
+    @RequestMapping(method = RequestMethod.GET, path="/demo/{days}")
+    public ResponseEntity<?> demo(@PathVariable Long days) {
+        if (days == null) days = Values.DEMO_DAYS;
+        long start = System.currentTimeMillis();
+
         // Definition of subjects
         subjects = new ArrayList<>();
         for (String s : Values.SUBJECTS) {
@@ -134,7 +148,7 @@ public class InitController {
             User u = new User(); {
                 u.setLang("fr");
                 u.setEnabled(true);
-                u.setBadgeId("E-99999-" + id);
+                u.setBadgeId("P-67849-" + id);
                 u.setRole(Role.TEACHER);
                 u.setFirstName(firstNameProvider.next());
                 u.setLastName(lastNameProvider.next());
@@ -151,38 +165,117 @@ public class InitController {
         }
         userRepository.save(teachers);
 
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
+        // Definition of all overseers
+        overseers = new ArrayList<>();
+        for (int count = 0; count < Values.OVERSEER_NB; ++count) {
+            User u = new User(); {
+                u.setLang("fr");
+                u.setEnabled(true);
+                u.setBadgeId("S-34512-" + id);
+                u.setRole(Role.SUPERVISOR);
+                u.setFirstName(firstNameProvider.next());
+                u.setLastName(lastNameProvider.next());
+                u.setEmail(createEmail(u, id));
+            }
+            overseers.add(u);
+            ++id;
+        }
+        userRepository.save(overseers);
+
+        // Definition of all data generator types
+        types = new ArrayList<>();
+        for (Object[] tab : Values.TYPES) {
+            DataGeneratorType t = makeType(
+                    (String) tab[0], (String) tab[1],
+                    (Double) tab[2], (Double) tab[3]
+            );
+            types.add(t);
+        }
+        typeRepository.save(types);
+
+        for (int i = 1; i <= 1; ++i) {
+            // Defining classroom
+            Classroom c = new Classroom(); {
+                c.setName("U2.2." + (i + 30));
+            }
+            classroomRepository.save(c);
+
+            // Defining associated temperature/hygrometry data generator
+            for (int k = 0; k < 2; ++k) {
+                DataGenerator dg = makeSensor(types.get(k));
+                dg.setClassroom(c);
+                dataGeneratorRepository.save(dg);
+
+                // Creating a new data type
+                int n = (int) (Math.random() * Values.VARIANCES[k].length);
+                double min = (double) Values.VARIANCES[k][n][0];
+                double max = (double) Values.VARIANCES[k][n][1];
+
+                Provider<List<Data>> dataCollector = ProviderBuilder.collector(
+                        ProviderBuilder.getDataProvider(dg, min, max),
+                        60 * 24
+                );
+
+                // Creating data for a given number of days
+                for (int day = 0; day < 7; ++day) {
+                    dataRepository.save(dataCollector.next());
+                }
+            }
+
+            // Defining associated luminosity data generator
+            DataGenerator dg = makeSensor(types.get(2));
+            dg.setClassroom(c);
+            dataGeneratorRepository.save(dg);
+
+            // Creating a new dataProvider to create light levels values
+            LocalTime lightUp = (LocalTime) Values.VARIANCES[2][0][0];
+            LocalTime lightDown = (LocalTime) Values.VARIANCES[2][0][1];
+
+            int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
+            int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
+            int step = 45;
 
 
+            // Building data provider
+            Provider<Double> dvp = ProviderBuilder.compose(
+                    ProviderBuilder.limit(
+                            ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
+                            sunrise - step
+                    ),
+                    ProviderBuilder.limit(
+                            ProviderBuilder.getLinearSegmentProvider(2 * step, Values.NIGHT_LIGHT, Values.DAY_LIGHT),
+                            2*step
+                    ),
+                    ProviderBuilder.limit(
+                            ProviderBuilder.getRangeSequence(0.95 * Values.DAY_LIGHT, 1.05 * Values.DAY_LIGHT),
+                            sunset - (sunrise + step) - step
+                    ),
+                    ProviderBuilder.limit(
+                            ProviderBuilder.getLinearSegmentProvider(2 * step, Values.DAY_LIGHT, Values.NIGHT_LIGHT),
+                            2 * step
+                    ),
+                    ProviderBuilder.limit(
+                            ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
+                            60 * 24 - (sunset + step)
+                    )
+            );
 
-    /**
-     * Defines in the DBMS, all sensors types which will be used.
-     */
-    @RequestMapping(method = RequestMethod.GET, path="/")
-    public ResponseEntity<?> init() {
-        long start = System.currentTimeMillis();
+            // Collecting daily values from this provider
+            Provider<List<Data>> dayLightCollector = ProviderBuilder.collector(
+                    ProviderBuilder.getDataProvider(dg, dvp),
+                    60 * 24
+            );
 
-        // Definition of types
-        DataGeneratorType type = makeType("temperature", "°C", -10, 40);
-        typeRepository.save(type);
-
-        // Definition of the data generator
-        SmartSensor sensor = makeSensor(type);
-        dataGeneratorRepository.save(sensor);
-
-        // Definition of all data for 2 months.
-        DaysValueProvider provider = new DaysValueProvider(sensor, -5, 20, 365);
-        while (provider.hasNext()) {
-            dataRepository.save(provider.next());
+            // Creating data for a given number of days
+            for (int day = 0; day < days; ++day) {
+                dataRepository.save(dayLightCollector.next());
+                dvp.reset();
+            }
         }
 
-        // Success
-        String message = String.format(
-                "The sensor has been initialized in %d ms !",
-                System.currentTimeMillis() - start
-        );
-        return new ResponseEntity<Object>(message, HttpStatus.OK);
+        // End of demo
+        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
+        return new ResponseEntity<>(message, HttpStatus.OK);
     }
 
 

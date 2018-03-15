@@ -4,7 +4,7 @@ import model.provider.Provider;
 import model.provider.ProviderBuilder;
 
 /**
- * This providers returns value which are included between two limits min and max.
+ * This provider returns value which are included between two limits min and max.
  *
  * All values are determined through a law probability which will define
  * their evolution :

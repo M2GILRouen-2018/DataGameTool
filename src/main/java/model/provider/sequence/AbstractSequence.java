@@ -10,7 +10,7 @@ import model.provider.AbstractProvider;
  */
 public abstract class AbstractSequence<T> extends AbstractProvider<T> implements Sequence<T> {
     // ATTRIBUTES
-    private final T first;
+    private T first;
 
 
     // CONSTRUCTORS
@@ -27,5 +27,12 @@ public abstract class AbstractSequence<T> extends AbstractProvider<T> implements
     @Override
     public T first() {
         return first;
+    }
+
+    // COMMAND
+    @Override
+    public void reset(T first) {
+        this.first = first;
+        super.reset(first);
     }
 }
