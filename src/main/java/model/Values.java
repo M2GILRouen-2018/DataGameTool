@@ -13,7 +13,7 @@ public class Values {
     // DEMO DEFINITION
     public static final long DEMO_DAYS = 60;
 
-    public static final long DEMO_BASIC_ROOMS = 20;
+    public static final long DEMO_BASIC_ROOMS = 2;
 
     public static final double DEMO_ADDITIONNAL_SENSOR_CHANCE = 0.1;
 
