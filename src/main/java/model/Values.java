@@ -1,10 +1,9 @@
 package model;
 
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
-import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGeneratorType;
-
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +13,7 @@ public class Values {
     // DEMO DEFINITION
     public static final long DEMO_DAYS = 60;
 
-    public static final long DEMO_BASIC_ROOMS = 18;
+    public static final long DEMO_BASIC_ROOMS = 20;
 
     public static final double DEMO_ADDITIONNAL_SENSOR_CHANCE = 0.1;
 
@@ -46,13 +45,6 @@ public class Values {
     /** Overseer' count */
     public static final int OVERSEER_NB = 3;
 
-    /** Courses'array : [DayOfWeek, start, end,  */
-    public static final Object[][] COURSES = {
-            {},
-            {}
-    };
-
-
     /** Data generators' types [name, unit, min, max] */
     public static final Object[][] TYPES = {
             {"temperature", "°C", -20., 60.},
@@ -60,13 +52,26 @@ public class Values {
             {"light", "%", 0., 100.},
     };
 
-
     /** Data generators' variances : [type][min, max] */
     public static final Object[][][] VARIANCES = {
             {{20., 25.}, {21., 24.}, {20., 23.}, {21., 22.}, {21., 25.}, {19., 23.}},
             {{20., 40.}, {15., 45.}, {15., 40.}, {20., 35.}, {25., 35.}},
             {{LocalTime.of(8,0), LocalTime.of(18,0)}}
     };
+
+    /** Courses' infos : [DayOfWeek][Grades, start, end, subject, label, teacher, room choice (2)] */
+    public static final Map<DayOfWeek, Object[][]> COURSES = new HashMap<>();
+    static {
+        COURSES.put(DayOfWeek.MONDAY, new Object[][] {
+                {new int[] {0, 1}, LocalTime.of(8, 0), LocalTime.of(10, 0), 0, "CM", 2, new int[] {0, 4}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "CM", 0, new int[] {5, 9}},
+                {new int[] {1}, LocalTime.of(10, 0), LocalTime.of(12, 0), 3, "CM", 1, new int[] {10, 13}},
+                {new int[] {1, 2}, LocalTime.of(13, 0), LocalTime.of(16, 0), 4, "CM", 3, new int[] {0, 4}},
+                {new int[] {3}, LocalTime.of(13, 0), LocalTime.of(15, 0), 5, "CM", 4, new int[] {18, 18}},
+                {new int[] {0}, LocalTime.of(14, 0), LocalTime.of(17, 0), 2, "CM", 2, new int[] {5, 9}}
+        });
+    }
+
 
     // OTHER VALUES
     /**

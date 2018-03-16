@@ -3,6 +3,7 @@ package controller;
 import io.univ.rouen.m2gil.smartclass.core.classroom.Classroom;
 import io.univ.rouen.m2gil.smartclass.core.classroom.ClassroomRepository;
 import io.univ.rouen.m2gil.smartclass.core.course.Course;
+import io.univ.rouen.m2gil.smartclass.core.course.CourseRepository;
 import io.univ.rouen.m2gil.smartclass.core.course.Subject;
 import io.univ.rouen.m2gil.smartclass.core.course.SubjectRepository;
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,6 +76,12 @@ public class InitController {
      */
     @Autowired
     private ClassroomRepository<Classroom> classroomRepository;
+
+    /**
+     * The repository used for the storage of all courses
+     */
+    @Autowired
+    private CourseRepository<Course> courseRepository;
 
 
     // ATTRIBUTES
@@ -173,6 +182,7 @@ public class InitController {
 
         // Definition of all overseers
         overseers = new ArrayList<>();
+
         for (int count = 0; count < Values.OVERSEER_NB; ++count) {
             User u = new User(); {
                 u.setLang("fr");
@@ -202,10 +212,12 @@ public class InitController {
 
         // Defining all classrooms
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
+        classrooms = new ArrayList<>();
         for (int i = 1; i <= Values.DEMO_BASIC_ROOMS; ++i) {
             Classroom c = new Classroom(); {
                 c.setName("U2.2." + (i + 30));
             }
+            classrooms.add(c);
             classroomRepository.save(c);
 
             // Defining associated sensors
@@ -280,6 +292,32 @@ public class InitController {
         }
 
         return s;
+    }
+
+    /**
+     * Defines all courses which are made during the given date.
+     */
+    private List<Course> makeCourses(LocalDate date) {
+        // Getting params.
+        if (!Values.COURSES.containsKey(date.getDayOfWeek())) return null;
+        Object[][] params = Values.COURSES.get(date.getDayOfWeek());
+
+        // Building all courses
+        List<Course> courseList = new ArrayList<>();
+        for (Object[] tab : params) {
+            Course c = new Course(); {
+                int i = ProviderBuilder.getRandomIntProvider(((int[]) tab[6])[0], ((int[]) tab[6])[1]).next();
+                c.setClassroom(classrooms.get(i));
+                c.setStartDate(LocalDateTime.of(date, (LocalTime) tab[1]));
+                c.setEndDate(LocalDateTime.of(date, (LocalTime) tab[2]));
+                c.setSubject(subjects.get((int) tab[3]));
+                c.setLabel(c.getSubject().getLabel() + " - " + tab[4]);
+            }
+
+            courseList.add(c);
+        }
+
+        return courseList;
     }
 
     /**
