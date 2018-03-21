@@ -193,7 +193,7 @@ public abstract class ProviderBuilder {
         Provider<List<Data>> dataCollector = ProviderBuilder.collector(dataProvider,60 * 24);
 
         for (int k = 0; k < 365; ++k) {
-            dataCollector.next();
+            datas.addAll(dataCollector.next());
             dataProvider.reset();
 
             System.out.println(String.format(
