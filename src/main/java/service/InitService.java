@@ -232,24 +232,22 @@ public class InitService {
      * Defines in the DBMS, all sensors (and their data) for all classrooms.
      */
     public ResponseEntity<?> fill() {
-        long start = System.currentTimeMillis();
-        List<Classroom> classrooms = classroomRepository.findAll();
-
-        for (Classroom c : classrooms) {
-            ResponseEntity<?> response = fill(c.getId());
-            if (response.getStatusCode() != HttpStatus.OK) return response;
-        }
-
-        // End of demo
-        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
-        return new ResponseEntity<>(message, HttpStatus.OK);
+        return fill(Values.DEMO_DAYS);
     }
 
     /**
      * Defines in the DBMS, all sensors (and their data) located in a given room
      */
-    public ResponseEntity<?> fill(long id) {
-        return fill(id, Values.DEMO_DAYS);
+    public ResponseEntity<?> fill(long days) {
+        List<Classroom> classrooms = classroomRepository.findAll();
+
+        for (Classroom c : classrooms) {
+            ResponseEntity<?> response = fill(c.getId(), days);
+            if (response.getStatusCode() != HttpStatus.OK) return response;
+        }
+
+        // End of demo
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -263,7 +261,7 @@ public class InitService {
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
 
         // Defining associated sensors
-        System.err.println("Classe " + c.getName());
+        System.err.println(c.getName());
         for (int k = 0; k < 3; ++k) {
             // Simulate the lack of this type of sensor in a given class
             if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
@@ -282,7 +280,7 @@ public class InitService {
                 } while (probabilityProvider.next() < Values.DEMO_ADDITIONNAL_SENSOR_CHANCE);
             }
         }
-        System.err.println("Classe " + c.getName() + " définie !");
+        System.err.println(c.getName() + " définie !");
 
 
         // End of demo

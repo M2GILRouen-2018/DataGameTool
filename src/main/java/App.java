@@ -2,8 +2,6 @@
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -13,11 +11,7 @@ import service.InitService;
 @SpringBootApplication
 @EnableJpaRepositories("repository")
 @ComponentScan({"controller", "config"})
-public class App extends SpringBootServletInitializer {
-    @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(App.class);
-    }
+public class App {
 
     // POINT D'ENTREE
     public static void main(String[] args) {
@@ -29,7 +23,18 @@ public class App extends SpringBootServletInitializer {
         return args -> {
             InitService initService = ctx.getBean(InitService.class);
 
+            // Initialisation datas
+            initService.clear();
             initService.demo();
+
+            // TODO : Generation of all courses
+
+            // Production of sensor data.
+            if (args.length > 0) {
+                initService.fill(Long.parseLong(args[0]));
+            } else {
+                initService.fill();
+            }
         };
     }
 }
