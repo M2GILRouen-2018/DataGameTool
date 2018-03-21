@@ -11,9 +11,9 @@ import java.util.Map;
  */
 public class Values {
     // DEMO DEFINITION
-    public static final long DEMO_DAYS = 60;
+    public static final long DEMO_DAYS = 365;
 
-    public static final long DEMO_BASIC_ROOMS = 2;
+    public static final long DEMO_BASIC_ROOMS = 20;
 
     public static final double DEMO_ADDITIONNAL_SENSOR_CHANCE = 0.1;
 
@@ -58,6 +58,7 @@ public class Values {
             {{20., 40.}, {15., 45.}, {15., 40.}, {20., 35.}, {25., 35.}},
             {{LocalTime.of(8,0), LocalTime.of(18,0)}}
     };
+    public static  final int LIGHT_STEP = 45;
 
     /** Courses' infos : [DayOfWeek][Grades, start, end, subject, label, teacher, room choice (2)] */
     public static final Map<DayOfWeek, Object[][]> COURSES = new HashMap<>();

@@ -26,11 +26,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Initialize the database with all generators and their types, in order
- * to specify a source for all produced values.
+ * REST Controller used to interact with the initialization service.
  */
 @RestController
 public class InitController {
@@ -198,6 +198,7 @@ public class InitController {
         }
         userRepository.save(overseers);
 
+
         // Definition of all data generator types
         types = new ArrayList<>();
         for (Object[] tab : Values.TYPES) {
@@ -210,6 +211,7 @@ public class InitController {
         typeRepository.save(types);
 
 
+        types = typeRepository.findAll();
         // Defining all classrooms
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
         classrooms = new ArrayList<>();
@@ -219,20 +221,6 @@ public class InitController {
             }
             classrooms.add(c);
             classroomRepository.save(c);
-
-            // Defining associated sensors
-            for (int k = 0; k < 3; ++k) {
-                // Simulate the lack of this type of sensor in a given class
-                if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
-                    do {
-                        DataGenerator dg = makeSensor(c, types.get(k));
-                        dataGeneratorRepository.save(dg);
-                        produceData(dg, k, days);
-
-                        // Simulate an additionnal sensor of this type ?
-                    } while (probabilityProvider.next() < Values.DEMO_ADDITIONNAL_SENSOR_CHANCE);
-                }
-            }
         }
 
         // End of demo
@@ -240,6 +228,70 @@ public class InitController {
         return new ResponseEntity<>(message, HttpStatus.OK);
     }
 
+    /**
+     * Defines in the DBMS, all sensors (and their data) for all classrooms.
+     */
+    @RequestMapping(method = RequestMethod.GET, path="/fill")
+    public ResponseEntity<?> fill() {
+        long start = System.currentTimeMillis();
+        List<Classroom> classrooms = classroomRepository.findAll();
+
+        for (Classroom c : classrooms) {
+            ResponseEntity<?> response = fill(c.getId());
+            if (response.getStatusCode() != HttpStatus.OK) return response;
+        }
+
+        // End of demo
+        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
+        return new ResponseEntity<>(message, HttpStatus.OK);
+    }
+
+    /**
+     * Defines in the DBMS, all sensors (and their data) located in a given room
+     */
+    @RequestMapping(method = RequestMethod.GET, path="/fill/{id}")
+    public ResponseEntity<?> fill(@PathVariable Long id) {
+        return fill(id, Values.DEMO_DAYS);
+    }
+
+    /**
+     * Defines in the DBMS, all sensors (and their data) located in a given room,
+     * for a given amount of days.
+     */
+    @RequestMapping(method = RequestMethod.GET, path="/fill/{id}/{days}")
+    public ResponseEntity<?> fill(@PathVariable Long id, @PathVariable Long days) {
+        long start = System.currentTimeMillis();
+        Classroom c = classroomRepository.findOne(id);
+        types = typeRepository.findAll();
+        Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
+
+        // Defining associated sensors
+        System.err.println("Classe " + c.getName());
+        for (int k = 0; k < 3; ++k) {
+            // Simulate the lack of this type of sensor in a given class
+            if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
+                do {
+                    long s2 = System.currentTimeMillis();
+                    DataGenerator dg = makeSensor(c, types.get(k));
+                    dataGeneratorRepository.save(dg);
+
+                    List<Data> datas = produceData(dg, k, days);
+                    long s3 = System.currentTimeMillis();
+                    System.err.println(k + " >> Données produites en " + (s3 - s2) + "ms.");
+                    dataRepository.save(datas);
+                    System.err.println(k + " >> Données stockées en " + (System.currentTimeMillis() - s3) + "ms.");
+
+                    // Simulate an additionnal sensor of this type ?
+                } while (probabilityProvider.next() < Values.DEMO_ADDITIONNAL_SENSOR_CHANCE);
+            }
+        }
+        System.err.println("Classe " + c.getName() + " définie !");
+
+
+        // End of demo
+        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
+        return new ResponseEntity<>(message, HttpStatus.OK);
+    }
 
     // TOOLS
     /**
@@ -323,7 +375,7 @@ public class InitController {
     /**
      * Produce all data for a given sensor.
      */
-    private void produceData(DataGenerator dg, int typeId, long days) {
+    private List<Data> produceData(DataGenerator dg, int typeId, long days) {
         Provider<Data> dataProvider = null;
 
         // Temp and Hygro.
@@ -342,42 +394,20 @@ public class InitController {
             LocalTime lightUp = (LocalTime) Values.VARIANCES[2][0][0];
             LocalTime lightDown = (LocalTime) Values.VARIANCES[2][0][1];
 
-            int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
-            int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
-            int step = 45;
-
             // Creating associated data provider
-            dataProvider = ProviderBuilder.getDataProvider(dg, ProviderBuilder.compose(
-                ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
-                        sunrise - step
-                ),
-                ProviderBuilder.limit(
-                        ProviderBuilder.getLinearSegmentProvider(2 * step, Values.NIGHT_LIGHT, Values.DAY_LIGHT),
-                        2*step
-                ),
-                ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95 * Values.DAY_LIGHT, 1.05 * Values.DAY_LIGHT),
-                        sunset - (sunrise + step) - step
-                ),
-                ProviderBuilder.limit(
-                        ProviderBuilder.getLinearSegmentProvider(2 * step, Values.DAY_LIGHT, Values.NIGHT_LIGHT),
-                        2 * step
-                ),
-                ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95 * Values.NIGHT_LIGHT, 1.05 * Values.NIGHT_LIGHT),
-                        60 * 24 - (sunset + step)
-                )
-            ));
+            dataProvider = ProviderBuilder.getLightProvider(dg, lightUp, lightDown);
         } else {
             throw new AssertionError();
         }
 
         // Creating data for a given number of days
         Provider<List<Data>> dataCollector = ProviderBuilder.collector(dataProvider,60 * 24);
+        List<Data> datas = new LinkedList<>();
         for (int day = 0; day < days; ++day) {
-            dataRepository.save(dataCollector.next());
+            datas.addAll(dataCollector.next());
             dataProvider.reset();
         }
+
+        return datas;
     }
 }

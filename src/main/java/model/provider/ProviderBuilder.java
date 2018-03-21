@@ -2,10 +2,13 @@ package model.provider;
 
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.DataGenerator;
+import model.Values;
 import model.provider.sequence.RangeSequence;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -13,6 +16,7 @@ import java.util.List;
  */
 public abstract class ProviderBuilder {
     // METHODS
+
     /**
      * Create a new provider to generate random decimal value
      * between two given values.
@@ -33,6 +37,7 @@ public abstract class ProviderBuilder {
     public static Provider<Double> getRangeSequence(double a, double b) {
         return new RangeSequence(a, b);
     }
+
     public static Provider<Double> getRangeSequence(double first, double a, double b) {
         return new RangeSequence(first, a, b);
     }
@@ -64,6 +69,7 @@ public abstract class ProviderBuilder {
     public static Provider<Data> getDataProvider(DataGenerator dataGenerator, double a, double b) {
         return new DataProvider(dataGenerator, a, b);
     }
+
     public static Provider<Data> getDataProvider(DataGenerator dataGenerator, Provider<Double> dataProvider) {
         return new DataProvider(dataGenerator, dataProvider);
     }
@@ -74,6 +80,7 @@ public abstract class ProviderBuilder {
     public static <T> Provider<T> getItemProvider(T... elements) {
         return new ItemProvider<T>(elements);
     }
+
     public static <T> Provider<T> getItemProvider(Collection<T> elements) {
         return new ItemProvider<T>(elements);
     }
@@ -96,10 +103,15 @@ public abstract class ProviderBuilder {
     public static <T> Provider<T> limit(final Provider<T> provider, int limit) {
         return new LimitedProvider<T>(limit) {
             @Override
-            public T last() { return provider.last(); }
+            public T last() {
+                return provider.last();
+            }
 
             @Override
-            public void reset(T last) { super.reset(last); provider.reset(last); }
+            public void reset(T last) {
+                super.reset(last);
+                provider.reset(last);
+            }
 
             @Override
             protected T generate() {
@@ -133,7 +145,60 @@ public abstract class ProviderBuilder {
     public static <T> Provider<T> compose(Provider<T>... providers) {
         return new CompositeProvider<T>(providers);
     }
+
     public static <T> Provider<T> compose(List<Provider<T>> providers) {
         return new CompositeProvider<T>(providers);
+    }
+
+    /**
+     * Aims at producing a data provider to reproduce the behavior of a light sensor.
+     */
+    public static Provider<Data> getLightProvider(DataGenerator dataGenerator, LocalTime lightUp, LocalTime lightDown) {
+        // Parameters
+        int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
+        int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
+        int step = Values.LIGHT_STEP;
+
+        // Returning provider
+        return getDataProvider(dataGenerator, compose(
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95*Values.NIGHT_LIGHT, 1.05*Values.NIGHT_LIGHT),
+                        sunrise - step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getLinearSegmentProvider(2*step,Values.NIGHT_LIGHT,Values.DAY_LIGHT),
+                        2 * step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95*Values.DAY_LIGHT,1.05*Values.DAY_LIGHT),
+                        sunset -(sunrise + step)-step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getLinearSegmentProvider(2*step,Values.DAY_LIGHT,Values.NIGHT_LIGHT),
+                        2*step
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRangeSequence(0.95*Values.NIGHT_LIGHT,1.05*Values.NIGHT_LIGHT),
+                        60*24-(sunset +step)
+                )
+        ));
+    }
+
+    public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+        List<Data> datas = new LinkedList<>();
+
+        // MAIN
+        Provider<Data> dataProvider = ProviderBuilder.getLightProvider(null, LocalTime.of(8, 0), LocalTime.of(19, 0));
+        Provider<List<Data>> dataCollector = ProviderBuilder.collector(dataProvider,60 * 24);
+
+        for (int k = 0; k < 365; ++k) {
+            dataCollector.next();
+            dataProvider.reset();
+
+            System.out.println(String.format(
+                    "%d : %dms (%d éléments)", k, System.currentTimeMillis() - start, datas.size()
+            ));
+        }
     }
 }
