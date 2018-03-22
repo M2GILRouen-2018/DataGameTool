@@ -28,11 +28,11 @@ public class App {
             initService.demo();
 
             // Production of sensor data.
-            /*if (args.length > 0) {
+            if (args.length > 0) {
                 initService.fill(Long.parseLong(args[0]));
             } else {
-                initService.fill(7L);
-            }*/
+                initService.fill();
+            }
         };
     }
 }

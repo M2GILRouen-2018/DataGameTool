@@ -1,6 +1,5 @@
 package service;
 
-import config.MyUserRepository;
 import io.univ.rouen.m2gil.smartclass.core.classroom.Classroom;
 import io.univ.rouen.m2gil.smartclass.core.classroom.ClassroomRepository;
 import io.univ.rouen.m2gil.smartclass.core.course.Course;
@@ -16,7 +15,6 @@ import io.univ.rouen.m2gil.smartclass.core.user.*;
 import model.Values;
 import model.provider.Provider;
 import model.provider.ProviderBuilder;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +22,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +64,7 @@ public class InitService {
      * The repository used for the storage of all users
      */
     @Autowired
-    private MyUserRepository userRepository;
+    private UserRepository<User> userRepository;
 
     /**
      * The repository used for the storage of all classrooms
@@ -343,7 +340,7 @@ public class InitService {
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
 
         // Defining associated sensors
-        System.out.println("-------" + c.getName() + "-------");
+        System.out.println("--------- " + c.getName() + " ---------");
         for (int k = 0; k < 3; ++k) {
             // Simulate the lack of this type of sensor in a given class
             if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
