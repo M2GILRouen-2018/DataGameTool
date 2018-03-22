@@ -1,5 +1,6 @@
 package service;
 
+import config.MyUserRepository;
 import io.univ.rouen.m2gil.smartclass.core.classroom.Classroom;
 import io.univ.rouen.m2gil.smartclass.core.classroom.ClassroomRepository;
 import io.univ.rouen.m2gil.smartclass.core.course.Course;
@@ -9,26 +10,22 @@ import io.univ.rouen.m2gil.smartclass.core.course.SubjectRepository;
 import io.univ.rouen.m2gil.smartclass.core.data.Data;
 import io.univ.rouen.m2gil.smartclass.core.data.DataRepository;
 import io.univ.rouen.m2gil.smartclass.core.datagenerator.*;
+import io.univ.rouen.m2gil.smartclass.core.presencehistoric.PresenceHistoric;
+import io.univ.rouen.m2gil.smartclass.core.presencehistoric.PresenceHistoricRepository;
 import io.univ.rouen.m2gil.smartclass.core.user.*;
 import model.Values;
 import model.provider.Provider;
 import model.provider.ProviderBuilder;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * DataGame's initialization service.
@@ -70,7 +67,7 @@ public class InitService {
      * The repository used for the storage of all users
      */
     @Autowired
-    private UserRepository<User> userRepository;
+    private MyUserRepository userRepository;
 
     /**
      * The repository used for the storage of all classrooms
@@ -84,6 +81,12 @@ public class InitService {
     @Autowired
     private CourseRepository<Course> courseRepository;
 
+    /**
+     * The repository used for the storage of all presency tickets.
+     */
+    @Autowired
+    private PresenceHistoricRepository<PresenceHistoric> presenceHistoricRepository;
+
 
     // ATTRIBUTES
     private List<Subject> subjects;
@@ -94,20 +97,14 @@ public class InitService {
     private List<Course> courses;
     private List<DataGeneratorType> types;
     private List<Classroom> classrooms;
+    private List<PresenceHistoric> presencies;
 
 
     // REQUESTS
     /**
      * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
      */
-    public ResponseEntity<?> demo() {
-        return demo(Values.DEMO_DAYS);
-    }
-
-    /**
-     * Defines in the DBMS, all initial data (subjects, grades, students, teachers)
-     */
-    public ResponseEntity<?> demo(long days) {
+    public void demo() {
         long start = System.currentTimeMillis();
 
         // Definition of subjects
@@ -181,7 +178,6 @@ public class InitService {
 
         // Definition of all overseers
         overseers = new ArrayList<>();
-
         for (int count = 0; count < Values.OVERSEER_NB; ++count) {
             User u = new User(); {
                 u.setLang("fr");
@@ -197,7 +193,6 @@ public class InitService {
         }
         userRepository.save(overseers);
 
-
         // Definition of all data generator types
         types = new ArrayList<>();
         for (Object[] tab : Values.TYPES) {
@@ -209,8 +204,6 @@ public class InitService {
         }
         typeRepository.save(types);
 
-
-        types = typeRepository.findAll();
         // Defining all classrooms
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
         classrooms = new ArrayList<>();
@@ -223,45 +216,134 @@ public class InitService {
         }
         classroomRepository.save(classrooms);
 
+        // Definition of all courses
+        courses = new ArrayList<>();
+        LocalDate date = Values.START.toLocalDate();
+        while (!date.equals(Values.END.toLocalDate())) {
+            // Getting params.
+            if (Values.COURSES.containsKey(date.getDayOfWeek())) {
+                Object[][] params = Values.COURSES.get(date.getDayOfWeek());
+
+                // Building all courses
+                for (Object[] tab : params) {
+                    Course c = new Course();
+                    {
+                        int i = ProviderBuilder.getRandomIntProvider(((int[]) tab[6])[0], ((int[]) tab[6])[1]).next();
+                        c.setClassroom(classrooms.get(i));
+                        c.setStartDate(LocalDateTime.of(date, (LocalTime) tab[1]));
+                        c.setEndDate(LocalDateTime.of(date, (LocalTime) tab[2]));
+                        c.setSubject(subjects.get((int) tab[3]));
+                        c.setLabel(c.getSubject().getLabel() + " - " + tab[4]);
+                    }
+                    courses.add(c);
+                }
+            }
+
+            // Taking the next day
+            date = date.plusDays(1);
+        }
+        courseRepository.save(courses);
+
+        // "Logging" about time spent
+        System.out.println(String.format(
+                "Courses initialised in %d ms", System.currentTimeMillis() - start)
+        );
+
+        // Presencies definition's loop
+        start = System.currentTimeMillis();
+        Provider<Integer> deltaProvider = ProviderBuilder.getRandomIntProvider(-Values.PRESENCY_DELTA, Values.PRESENCY_DELTA);
+        presencies = new ArrayList<>();
+
+        // Defining all users for all grades.
+        Map<Grade, List<User>> promotions = new HashMap<>(); {
+            for (Grade g : grades) {
+                promotions.put(g, students.stream().filter(s -> s.getGrades().contains(g)).collect(Collectors.toList()));
+            }
+        }
+
+        // Defining all courses' metadata
+        List<Object[]> coursesMetaData = new ArrayList<>(); {
+            for (Object[][] tab : Values.COURSES.values()) {
+                for (Object[] attr : tab) coursesMetaData.add(attr);
+            }
+        }
+        List<List<Grade>> gradesMetaData = new ArrayList<>(); {
+            for (Object[] courseMetaData : coursesMetaData) {
+                gradesMetaData.add(
+                        Arrays.stream((int[]) courseMetaData[0])
+                        .mapToObj(i -> grades.get(i))
+                        .collect(Collectors.toList())
+                );
+            }
+        }
+        int index = 0;
+        int n = coursesMetaData.size();
+
+        // Presency loop
+        for (Course c : courses) {
+            for (Grade g : gradesMetaData.get(index)) {
+                for (User student : promotions.get(g)) {
+                    int beginDelta = deltaProvider.next();
+                    int endDelta = deltaProvider.next();
+                    LocalDateTime begin = beginDelta >= 0 ? c.getStartDate().plusMinutes(beginDelta) : c.getStartDate().minusMinutes(beginDelta);
+                    LocalDateTime end = endDelta >= 0 ? c.getEndDate().plusMinutes(endDelta) : c.getEndDate().minusMinutes(endDelta);
+
+                    // Creating presency ticket (if the student is present)
+                    if (probabilityProvider.next() < Values.PRESENCY_RATE) {
+                        presencies.add(makePresenceTicket(student, c.getClassroom(), begin, end));
+                    }
+                }
+            }
+
+            // Adding course's teacher
+            User teacher = teachers.get((Integer) coursesMetaData.get(index)[5]);
+            presencies.add(makePresenceTicket(teacher, c.getClassroom(), c.getStartDate(), c.getEndDate()));
+
+            // Handling teachers
+            index = (index + 1) % n;
+        }
+        presenceHistoricRepository.save(presencies);
+
+        // "Logging" about time spent
+        System.out.println(String.format(
+                "Presency data initialised in %d ms", System.currentTimeMillis() - start)
+        );
+
         // End of demo
-        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
-        return new ResponseEntity<>(message, HttpStatus.OK);
+        System.out.println(String.format(
+                "All demo meta-data initialised in %d ms", System.currentTimeMillis() - start)
+        );
     }
 
     /**
      * Defines in the DBMS, all sensors (and their data) for all classrooms.
      */
-    public ResponseEntity<?> fill() {
-        return fill(Values.DEMO_DAYS);
+    public void fill() {
+        fill(Values.DEMO_DAYS);
     }
 
     /**
-     * Defines in the DBMS, all sensors (and their data) located in a given room
+     * Defines in the DBMS, all sensors (and their data) for all classrooms.
+     * The data will be defined for a given amount of days.
      */
-    public ResponseEntity<?> fill(long days) {
-        List<Classroom> classrooms = classroomRepository.findAll();
-
-        for (Classroom c : classrooms) {
-            ResponseEntity<?> response = fill(c.getId(), days);
-            if (response.getStatusCode() != HttpStatus.OK) return response;
+    public void fill(long days) {
+        for (Classroom c : classroomRepository.findAll()) {
+            fill(c.getId(), days);
         }
-
-        // End of demo
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
      * Defines in the DBMS, all sensors (and their data) located in a given room,
      * for a given amount of days.
      */
-    public ResponseEntity<?> fill(long id, long days) {
+    public void fill(long id, long days) {
         long start = System.currentTimeMillis();
         Classroom c = classroomRepository.findOne(id);
         types = typeRepository.findAll();
         Provider<Double> probabilityProvider = ProviderBuilder.getProbabilityProvider();
 
         // Defining associated sensors
-        System.err.println(c.getName());
+        System.out.println("-------" + c.getName() + "-------");
         for (int k = 0; k < 3; ++k) {
             // Simulate the lack of this type of sensor in a given class
             if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
@@ -272,26 +354,25 @@ public class InitService {
 
                     List<Data> datas = produceData(dg, k, days);
                     long s3 = System.currentTimeMillis();
-                    System.err.println(k + " >> Données produites en " + (s3 - s2) + "ms.");
+                    System.out.println(k + " >> Data produced in " + (s3 - s2) + "ms.");
                     dataRepository.save(datas);
-                    System.err.println(k + " >> Données stockées en " + (System.currentTimeMillis() - s3) + "ms.");
+                    System.out.println(k + " >> Data stored in " + (System.currentTimeMillis() - s3) + "ms.");
 
                     // Simulate an additionnal sensor of this type ?
                 } while (probabilityProvider.next() < Values.DEMO_ADDITIONNAL_SENSOR_CHANCE);
             }
         }
-        System.err.println(c.getName() + " définie !");
-
 
         // End of demo
-        String message = String.format("Initialised in %d ms", System.currentTimeMillis() - start);
-        return new ResponseEntity<>(message, HttpStatus.OK);
+        String message = String.format("Sensor data initialised in %d ms", System.currentTimeMillis() - start);
+        System.out.println(message);
     }
 
     /**
      * Remove all initialized data.
      */
     public void clear() {
+        presenceHistoricRepository.deleteAll();
         courseRepository.deleteAll();
         dataRepository.deleteAll();
         dataGeneratorRepository.deleteAll();
@@ -356,29 +437,17 @@ public class InitService {
     }
 
     /**
-     * Defines all courses which are made during the given date.
+     * Returns a new presency ticket, attesting the presency of a user for a given interval of time in a given room.
      */
-    private List<Course> makeCourses(LocalDate date) {
-        // Getting params.
-        if (!Values.COURSES.containsKey(date.getDayOfWeek())) return null;
-        Object[][] params = Values.COURSES.get(date.getDayOfWeek());
-
-        // Building all courses
-        List<Course> courseList = new ArrayList<>();
-        for (Object[] tab : params) {
-            Course c = new Course(); {
-                int i = ProviderBuilder.getRandomIntProvider(((int[]) tab[6])[0], ((int[]) tab[6])[1]).next();
-                c.setClassroom(classrooms.get(i));
-                c.setStartDate(LocalDateTime.of(date, (LocalTime) tab[1]));
-                c.setEndDate(LocalDateTime.of(date, (LocalTime) tab[2]));
-                c.setSubject(subjects.get((int) tab[3]));
-                c.setLabel(c.getSubject().getLabel() + " - " + tab[4]);
-            }
-
-            courseList.add(c);
+    private PresenceHistoric makePresenceTicket(User user, Classroom classroom, LocalDateTime begin, LocalDateTime end) {
+        PresenceHistoric presenceHistoric = new PresenceHistoric(); {
+            presenceHistoric.setUser(user);
+            presenceHistoric.setClassroom(classroom);
+            presenceHistoric.setBegin(begin);
+            presenceHistoric.setEnd(end);
         }
 
-        return courseList;
+        return presenceHistoric;
     }
 
     /**

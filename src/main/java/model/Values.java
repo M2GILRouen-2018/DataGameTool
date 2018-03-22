@@ -58,7 +58,11 @@ public class Values {
             {{20., 40.}, {15., 45.}, {15., 40.}, {20., 35.}, {25., 35.}},
             {{LocalTime.of(8,0), LocalTime.of(18,0)}}
     };
-    public static  final int LIGHT_STEP = 45;
+    public static final int LIGHT_STEP = 45;
+
+    /** The number of minutes which the presency ticket can be altered compaired by the start/end time
+     * of a given course. **/
+    public static final int PRESENCY_DELTA = 5;
 
     /** Courses' infos : [DayOfWeek][Grades, start, end, subject, label, teacher, room choice (2)] */
     public static final Map<DayOfWeek, Object[][]> COURSES = new HashMap<>();
@@ -71,7 +75,39 @@ public class Values {
                 {new int[] {3}, LocalTime.of(13, 0), LocalTime.of(15, 0), 5, "CM", 4, new int[] {18, 18}},
                 {new int[] {0}, LocalTime.of(14, 0), LocalTime.of(17, 0), 2, "CM", 2, new int[] {5, 9}}
         });
+        COURSES.put(DayOfWeek.TUESDAY, new Object[][] {
+                {new int[] {0}, LocalTime.of(9, 0), LocalTime.of(12, 0), 0, "TP", 0, new int[] {14,14}},
+                {new int[] {3}, LocalTime.of(13, 30), LocalTime.of(17, 0), 1, "TP", 0, new int[] {14,14}},
+                {new int[] {1}, LocalTime.of(10, 0), LocalTime.of(13, 0), 3, "CM", 1, new int[] {0, 4}},
+                {new int[] {0}, LocalTime.of(13, 0), LocalTime.of(16, 0), 0, "TP", 2, new int[] {16,16}},
+                {new int[] {0}, LocalTime.of(16, 15), LocalTime.of(17, 45), 4, "CM", 3, new int[] {9, 13}}
+        });
+        COURSES.put(DayOfWeek.WEDNESDAY, new Object[][] {
+                {new int[] {0}, LocalTime.of(8, 0), LocalTime.of(12, 0), 2, "TP", 2, new int[] {16, 16}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "TD", 0, new int[] {14,14}},
+                {new int[] {1,2}, LocalTime.of(10, 30), LocalTime.of(12, 30), 5, "TD", 4, new int[] {18,18}},
+                {new int[] {1}, LocalTime.of(14, 0), LocalTime.of(18, 0), 3, "TP", 1, new int[] {15, 15}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "CM", 0, new int[] {0, 9}}
+        });
+        COURSES.put(DayOfWeek.THURSDAY, new Object[][] {
+                {new int[] {0, 1}, LocalTime.of(8, 0), LocalTime.of(10, 0), 0, "CM", 2, new int[] {0, 4}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "CM", 0, new int[] {5, 9}},
+                {new int[] {1}, LocalTime.of(10, 0), LocalTime.of(12, 0), 3, "CM", 1, new int[] {10, 13}},
+                {new int[] {1, 2}, LocalTime.of(13, 0), LocalTime.of(16, 0), 4, "TP", 3, new int[] {17, 17}},
+                {new int[] {3}, LocalTime.of(13, 0), LocalTime.of(15, 0), 5, "TP", 4, new int[] {18, 18}},
+                {new int[] {0}, LocalTime.of(14, 0), LocalTime.of(17, 0), 2, "CM", 2, new int[] {5, 9}}
+        });
+        COURSES.put(DayOfWeek.FRIDAY, new Object[][] {
+                {new int[] {0}, LocalTime.of(8, 0), LocalTime.of(12, 0), 2, "TP", 2, new int[] {16, 16}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "TD", 0, new int[] {14,14}},
+                {new int[] {1,2}, LocalTime.of(10, 30), LocalTime.of(12, 30), 5, "TD", 4, new int[] {18,18}},
+                {new int[] {1}, LocalTime.of(14, 0), LocalTime.of(18, 0), 3, "TP", 1, new int[] {15, 15}},
+                {new int[] {3}, LocalTime.of(9, 0), LocalTime.of(12, 0), 1, "CM", 0, new int[] {0, 9}},
+        });
     }
+
+    /** The presency rate of all students, in general **/
+    public static final double PRESENCY_RATE = 0.8;
 
 
     // OTHER VALUES
@@ -104,7 +140,12 @@ public class Values {
     };
 
     /**
-     * The date used to start all scenariis (01/01/2018, 00:00)
+     * The date used to start all scenariis (Actual date, minus a year)
      */
-    public static final LocalDateTime START = LocalDateTime.of(2018, 1, 1, 0, 0);
+    public static final LocalDateTime START = LocalDateTime.now().minusYears(1L);
+
+    /**
+     * The date used to end all scenariis (Actual date)
+     */
+    public static final LocalDateTime END = LocalDateTime.now();
 }

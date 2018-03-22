@@ -23,18 +23,16 @@ public class App {
         return args -> {
             InitService initService = ctx.getBean(InitService.class);
 
-            // Initialisation datas
+            // Initialisation
             initService.clear();
             initService.demo();
 
-            // TODO : Generation of all courses
-
             // Production of sensor data.
-            if (args.length > 0) {
+            /*if (args.length > 0) {
                 initService.fill(Long.parseLong(args[0]));
             } else {
-                initService.fill();
-            }
+                initService.fill(7L);
+            }*/
         };
     }
 }
