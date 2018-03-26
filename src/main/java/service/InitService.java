@@ -397,7 +397,7 @@ public class InitService {
      */
     private String createEmail(User u, int id) {
         return String.format(
-                "%s.%s%d@gmail.com",
+                "%s.%s%d@smartclass.com",
                 u.getFirstName().toLowerCase().replace(' ', '_'),
                 u.getLastName().toLowerCase().replace(' ', '_'),
                 id

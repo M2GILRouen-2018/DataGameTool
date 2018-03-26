@@ -24,7 +24,7 @@ public class App {
             InitService initService = ctx.getBean(InitService.class);
 
             // Initialisation
-            initService.clear();
+            // initService.clear();
             initService.demo();
 
             // Production of sensor data.
