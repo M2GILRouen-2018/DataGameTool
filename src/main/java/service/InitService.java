@@ -29,6 +29,13 @@ import java.util.stream.Collectors;
  */
 @Service
 public class InitService {
+    // RANDOM INT
+    private static int INT = 0;
+    private static final int nextInt() {
+        ++INT;
+        return INT;
+    }
+
     // REPOSITORIES
     /**
      * The repository used for the storage of data generators
@@ -427,7 +434,7 @@ public class InitService {
             s.setEnable(true);
             s.setType(type);
             s.setProducingVirtual(true);
-            s.setReference("AXKSI");
+            s.setReference("AXKSI-" + nextInt());
         }
 
         return s;

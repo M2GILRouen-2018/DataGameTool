@@ -16,7 +16,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <json.version>20172018</json.version>
-        <core.version>2.0.29-SNAPSHOT</core.version>
+        <core.version>2.0-RELEASE</core.version>
     </properties>
 
     <parent>
@@ -159,7 +159,7 @@
         <repository>
             <id>smartclass.univ.rouen</id>
             <name>SmartClass Internal Repository</name>
-            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-snapshots/</url>
+            <url>http://smartclass-dev.univ-rouen.fr/nexus/repository/maven-releases/</url>
         </repository>
     </repositories>
     <pluginRepositories>
