@@ -153,7 +153,7 @@ public abstract class ProviderBuilder {
     /**
      * Aims at producing a data provider to reproduce the behavior of a light sensor.
      */
-    public static Provider<Data> getLightProvider(DataGenerator dataGenerator, LocalTime lightUp, LocalTime lightDown) {
+    public static Provider<Data> getLightProvider(DataGenerator dataGenerator, LocalTime lightUp, LocalTime lightDown, double min, double max) {
         // Parameters
         int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
         int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
@@ -162,27 +162,58 @@ public abstract class ProviderBuilder {
         // Returning provider
         return getDataProvider(dataGenerator, compose(
                 ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95*Values.NIGHT_LIGHT, 1.05*Values.NIGHT_LIGHT),
+                        ProviderBuilder.getRangeSequence(0.95*min, 1.05*min),
                         sunrise - step
                 ),
                 ProviderBuilder.limit(
-                        ProviderBuilder.getLinearSegmentProvider(2*step,Values.NIGHT_LIGHT,Values.DAY_LIGHT),
+                        ProviderBuilder.getLinearSegmentProvider(2*step, min, max),
                         2 * step
                 ),
                 ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95*Values.DAY_LIGHT,1.05*Values.DAY_LIGHT),
+                        ProviderBuilder.getRangeSequence(0.95*max,1.05*max),
                         sunset -(sunrise + step)-step
                 ),
                 ProviderBuilder.limit(
-                        ProviderBuilder.getLinearSegmentProvider(2*step,Values.DAY_LIGHT,Values.NIGHT_LIGHT),
+                        ProviderBuilder.getLinearSegmentProvider(2*step, max, min),
                         2*step
                 ),
                 ProviderBuilder.limit(
-                        ProviderBuilder.getRangeSequence(0.95*Values.NIGHT_LIGHT,1.05*Values.NIGHT_LIGHT),
+                        ProviderBuilder.getRangeSequence(0.95*min,1.05*min),
                         60*24-(sunset +step)
                 )
         ));
     }
+    public static Provider<Data> getLightProvider(DataGenerator dataGenerator, LocalTime lightUp, LocalTime lightDown) {
+        return getLightProvider(dataGenerator, lightUp, lightDown, Values.NIGHT_LIGHT, Values.DAY_LIGHT);
+    }
+
+
+    /**
+     * Aims at producing a data provider to reproduce the behavior of a motion sensor.
+     */
+    public static Provider<Data> getMotionProvider(DataGenerator dataGenerator, LocalTime lightUp, LocalTime lightDown) {
+        // Parameters
+        int sunrise = lightUp.getHour() * 60 + lightUp.getMinute();
+        int sunset = lightDown.getHour() * 60 + lightDown.getMinute();
+
+        // Returning provider
+        return getDataProvider(dataGenerator, compose(
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRandomProvider(0, 0),
+                        sunrise
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRandomProvider(1, 1),
+                        sunset - sunrise
+                ),
+                ProviderBuilder.limit(
+                        ProviderBuilder.getRandomProvider(0, 0),
+                        60*24 - sunset
+                )
+        ));
+    }
+
+
 
     public static void main(String[] args) {
         long start = System.currentTimeMillis();

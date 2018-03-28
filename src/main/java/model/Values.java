@@ -1,6 +1,7 @@
 package model;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -48,15 +49,17 @@ public class Values {
     /** Data generators' types [name, unit, min, max] */
     public static final Object[][] TYPES = {
             {"temperature", "°C", -20., 60.},
-            {"hygro", "%", 0., 100.},
-            {"light", "%", 0., 100.},
+            {"humidity", "%", 0., 100.},
+            {"brightness", "%", 0., 100.},
+            {"motion", "", 0., 1.}
     };
 
     /** Data generators' variances : [type][min, max] */
     public static final Object[][][] VARIANCES = {
             {{20., 25.}, {21., 24.}, {20., 23.}, {21., 22.}, {21., 25.}, {19., 23.}},
             {{20., 40.}, {15., 45.}, {15., 40.}, {20., 35.}, {25., 35.}},
-            {{LocalTime.of(8,0), LocalTime.of(18,0)}}
+            {{LocalTime.of(8,0), LocalTime.of(18,0)}},
+            {{LocalTime.of(7,30), LocalTime.of(20,0)}}
     };
     public static final int LIGHT_STEP = 45;
 
@@ -114,12 +117,12 @@ public class Values {
     /**
      * The average light value during night.
      */
-    public static final double NIGHT_LIGHT = 0.05;
+    public static final double NIGHT_LIGHT = 2;
 
     /**
      * The average light value during the day.
      */
-    public static final double DAY_LIGHT = 0.85;
+    public static final double DAY_LIGHT = 30;
 
     /**
      * Defines a list of available first names.
@@ -142,10 +145,10 @@ public class Values {
     /**
      * The date used to start all scenariis (Actual date, minus a year)
      */
-    public static final LocalDateTime START = LocalDateTime.now().minusYears(1L);
+    public static final LocalDateTime START = LocalDate.now().minusYears(1).atStartOfDay();
 
     /**
      * The date used to end all scenariis (Actual date)
      */
-    public static final LocalDateTime END = LocalDateTime.now();
+    public static final LocalDateTime END = START.plusYears(1);
 }

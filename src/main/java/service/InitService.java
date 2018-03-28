@@ -348,7 +348,7 @@ public class InitService {
 
         // Defining associated sensors
         System.out.println("--------- " + c.getName() + " ---------");
-        for (int k = 0; k < 3; ++k) {
+        for (int k = 0; k < types.size(); ++k) {
             // Simulate the lack of this type of sensor in a given class
             if (probabilityProvider.next() > Values.DEMO_SKIP_SENSOR_CHANCE) {
                 do {
@@ -470,15 +470,21 @@ public class InitService {
             // Creating associated data provider
             dataProvider = ProviderBuilder.getDataProvider(dg, min, max);
         }
-        // Light
-        else if (typeId == 2) {
+        // Light and motion.
+        else if (typeId >= 2) {
             // Generation parameters
-            LocalTime lightUp = (LocalTime) Values.VARIANCES[2][0][0];
-            LocalTime lightDown = (LocalTime) Values.VARIANCES[2][0][1];
+            LocalTime lightUp = (LocalTime) Values.VARIANCES[typeId][0][0];
+            LocalTime lightDown = (LocalTime) Values.VARIANCES[typeId][0][1];
 
             // Creating associated data provider
-            dataProvider = ProviderBuilder.getLightProvider(dg, lightUp, lightDown);
-        } else {
+            if (typeId == 2) {
+                dataProvider = ProviderBuilder.getLightProvider(dg, lightUp, lightDown);
+            }
+            else if (typeId == 3) {
+                dataProvider = ProviderBuilder.getMotionProvider(dg, lightUp, lightDown);
+            }
+        }
+        else {
             throw new AssertionError();
         }
 
